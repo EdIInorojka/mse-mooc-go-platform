@@ -1,11 +1,54 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageIntro } from '../../components/PageIntro';
 import { fetchMyGrades, joinGroupByInvite } from '../../api/services/groups';
 import { useAuth } from '../../auth/AuthContext';
+import { useI18n } from '../../i18n/I18nContext';
+import { enrollmentStatusLabel } from '../../i18n/format';
 import type { GradeRecord } from '../../types/models';
+
+const copy = {
+  ru: {
+    eyebrow: 'Пространство студента',
+    title: 'Мои оценки',
+    description: 'Оценки, обратная связь преподавателей и быстрый вход в группу по invite-токену.',
+    invitePlaceholder: 'Введите invite-токен',
+    joinGroup: 'Вступить в группу',
+    publishedGrades: 'Опубликованные оценки',
+    averageResult: 'Средний результат',
+    draftReviews: 'Черновики',
+    groupAccess: 'Доступ к группе',
+    updated: 'Обновлен',
+    ready: 'Готов',
+    course: 'Курс',
+    group: 'Группа',
+    score: 'Оценка',
+    status: 'Статус',
+    feedback: 'Комментарий',
+  },
+  en: {
+    eyebrow: 'Student space',
+    title: 'My grades',
+    description: 'Grades, teacher feedback, and quick group join by invite token.',
+    invitePlaceholder: 'Paste invite token',
+    joinGroup: 'Join group',
+    publishedGrades: 'Published grades',
+    averageResult: 'Average result',
+    draftReviews: 'Draft reviews',
+    groupAccess: 'Group access',
+    updated: 'Updated',
+    ready: 'Ready',
+    course: 'Course',
+    group: 'Group',
+    score: 'Score',
+    status: 'Status',
+    feedback: 'Feedback',
+  },
+} as const;
 
 export function MyGradesPage() {
   const { user } = useAuth();
+  const { language } = useI18n();
+  const text = copy[language];
   const [grades, setGrades] = useState<GradeRecord[]>([]);
   const [inviteToken, setInviteToken] = useState('');
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
@@ -29,9 +72,9 @@ export function MyGradesPage() {
   return (
     <div className="stack-xl">
       <PageIntro
-        eyebrow="Student space"
-        title="My grades"
-        description="Оценки, обратная связь преподавателей и быстрый вход в группу по invite-токену."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
         actions={
           <form
             className="inline-form"
@@ -46,29 +89,29 @@ export function MyGradesPage() {
             <input
               value={inviteToken}
               onChange={(event) => setInviteToken(event.target.value)}
-              placeholder="Paste invite token"
+              placeholder={text.invitePlaceholder}
             />
-            <button type="submit" className="primary-button">Join group</button>
+            <button type="submit" className="primary-button">{text.joinGroup}</button>
           </form>
         }
       />
 
       <section className="stats-grid">
         <article className="stat-card">
-          <span>Published grades</span>
+          <span>{text.publishedGrades}</span>
           <strong>{grades.filter((grade) => grade.status === 'published').length}</strong>
         </article>
         <article className="stat-card">
-          <span>Average result</span>
+          <span>{text.averageResult}</span>
           <strong>{average}%</strong>
         </article>
         <article className="stat-card">
-          <span>Draft reviews</span>
+          <span>{text.draftReviews}</span>
           <strong>{grades.filter((grade) => grade.status === 'draft').length}</strong>
         </article>
         <article className="stat-card">
-          <span>Group access</span>
-          <strong>{joinStatus ? 'Updated' : 'Ready'}</strong>
+          <span>{text.groupAccess}</span>
+          <strong>{joinStatus ? text.updated : text.ready}</strong>
         </article>
       </section>
 
@@ -78,11 +121,11 @@ export function MyGradesPage() {
         <table>
           <thead>
             <tr>
-              <th>Course</th>
-              <th>Group</th>
-              <th>Score</th>
-              <th>Status</th>
-              <th>Feedback</th>
+              <th>{text.course}</th>
+              <th>{text.group}</th>
+              <th>{text.score}</th>
+              <th>{text.status}</th>
+              <th>{text.feedback}</th>
             </tr>
           </thead>
           <tbody>
@@ -94,7 +137,7 @@ export function MyGradesPage() {
                 </td>
                 <td>{grade.groupName}</td>
                 <td>{grade.score}/{grade.maxScore}</td>
-                <td><span className={`pill pill--${grade.status === 'published' ? 'enrolled' : 'waitlist'}`}>{grade.status}</span></td>
+                <td><span className={`pill pill--${grade.status === 'published' ? 'enrolled' : 'waitlist'}`}>{enrollmentStatusLabel(grade.status, language)}</span></td>
                 <td>{grade.feedback}</td>
               </tr>
             ))}
@@ -104,4 +147,3 @@ export function MyGradesPage() {
     </div>
   );
 }
-

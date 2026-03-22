@@ -1,11 +1,47 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageIntro } from '../../components/PageIntro';
 import { fetchCourses } from '../../api/services/courses';
+import { useI18n } from '../../i18n/I18nContext';
+import { audienceLabel, enrollmentStatusLabel, localeFor } from '../../i18n/format';
 import type { Course } from '../../types/models';
+
+const copy = {
+  ru: {
+    eyebrow: 'Пространство студента',
+    title: 'Каталог курсов',
+    description: 'Подборка MOOC-курсов с быстрым поиском по направлению, формату и аудитории.',
+    quickSearch: 'Быстрый поиск',
+    searchPlaceholder: 'аналитика, безопасность, инженерия...',
+    availableNow: 'Доступно сейчас',
+    studentReady: 'Подходит студентам',
+    freeOptions: 'Бесплатные',
+    avgRating: 'Средний рейтинг',
+    free: 'Бесплатно',
+    weeks: 'недель',
+    seatsLeft: 'мест осталось',
+  },
+  en: {
+    eyebrow: 'Student space',
+    title: 'Course catalog',
+    description: 'MOOC selection with quick search by domain, format, and audience.',
+    quickSearch: 'Quick search',
+    searchPlaceholder: 'analytics, security, engineering...',
+    availableNow: 'Available now',
+    studentReady: 'Student-ready',
+    freeOptions: 'Free options',
+    avgRating: 'Avg. rating',
+    free: 'Free',
+    weeks: 'weeks',
+    seatsLeft: 'seats left',
+  },
+} as const;
 
 export function CourseCatalogPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [query, setQuery] = useState('');
+  const { language } = useI18n();
+  const text = copy[language];
+  const locale = localeFor(language);
 
   useEffect(() => {
     void fetchCourses().then(setCourses);
@@ -29,16 +65,16 @@ export function CourseCatalogPage() {
   return (
     <div className="stack-xl">
       <PageIntro
-        eyebrow="Student space"
-        title="Course catalog"
-        description="Подборка MOOC-курсов с быстрым поиском по направлению, формату и целевой аудитории."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
         actions={
           <label className="search-field">
-            <span>Quick search</span>
+            <span>{text.quickSearch}</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="analytics, security, engineering..."
+              placeholder={text.searchPlaceholder}
             />
           </label>
         }
@@ -46,19 +82,19 @@ export function CourseCatalogPage() {
 
       <section className="stats-grid">
         <article className="stat-card">
-          <span>Available now</span>
+          <span>{text.availableNow}</span>
           <strong>{courses.length}</strong>
         </article>
         <article className="stat-card">
-          <span>Student-ready</span>
+          <span>{text.studentReady}</span>
           <strong>{courses.filter((course) => course.audience !== 'teacher').length}</strong>
         </article>
         <article className="stat-card">
-          <span>Free options</span>
+          <span>{text.freeOptions}</span>
           <strong>{courses.filter((course) => course.price === 0).length}</strong>
         </article>
         <article className="stat-card">
-          <span>Avg. rating</span>
+          <span>{text.avgRating}</span>
           <strong>
             {courses.length > 0
               ? (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1)
@@ -71,8 +107,8 @@ export function CourseCatalogPage() {
         {filteredCourses.map((course) => (
           <article key={course.id} className="course-card">
             <div className="course-card__header">
-              <span className={`pill pill--${course.enrollmentStatus}`}>{course.enrollmentStatus}</span>
-              <span className="pill pill--role">{course.audience}</span>
+              <span className={`pill pill--${course.enrollmentStatus}`}>{enrollmentStatusLabel(course.enrollmentStatus, language)}</span>
+              <span className="pill pill--role">{audienceLabel(course.audience, language)}</span>
               <span className="muted">{course.startDate}</span>
             </div>
             <h3>{course.title}</h3>
@@ -84,12 +120,12 @@ export function CourseCatalogPage() {
             </div>
             <div className="course-footer">
               <div>
-                <strong>{course.price === 0 ? 'Free' : `${course.price.toLocaleString('ru-RU')} RUB`}</strong>
-                <span>{course.durationWeeks} weeks</span>
+                <strong>{course.price === 0 ? text.free : `${course.price.toLocaleString(locale)} RUB`}</strong>
+                <span>{course.durationWeeks} {text.weeks}</span>
               </div>
               <div>
                 <strong>{course.rating.toFixed(1)}</strong>
-                <span>{course.seatsLeft} seats left</span>
+                <span>{course.seatsLeft} {text.seatsLeft}</span>
               </div>
             </div>
           </article>
@@ -98,4 +134,3 @@ export function CourseCatalogPage() {
     </div>
   );
 }
-

@@ -1,14 +1,60 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageIntro } from '../../components/PageIntro';
 import { createGroup, createInvite, fetchTeacherGroups } from '../../api/services/groups';
 import { useAuth } from '../../auth/AuthContext';
+import { useI18n } from '../../i18n/I18nContext';
 import type { StudentGroup } from '../../types/models';
+
+const copy = {
+  ru: {
+    eyebrow: 'Пространство преподавателя',
+    title: 'Учебные группы',
+    description: 'Создание когорт, раздача invite-ссылок и обзор прогресса студентов.',
+    newGroupName: 'Название новой группы',
+    courseNumericId: 'Числовой ID курса',
+    createGroup: 'Создать группу',
+    groups: 'Группы',
+    totalMembers: 'Всего участников',
+    activeInvites: 'Активные инвайты',
+    avgProgress: 'Средний прогресс',
+    studentsCreated: 'студентов, создана',
+    refreshInvite: 'Обновить инвайт',
+    inviteRefreshed: 'Инвайт обновлен',
+    inviteLink: 'Invite-ссылка',
+    expiresUsed: 'Истекает',
+    usedTimes: 'использований',
+    progress: 'Прогресс',
+    avgGrade: 'Средняя оценка',
+  },
+  en: {
+    eyebrow: 'Teacher space',
+    title: 'Student groups',
+    description: 'Create cohorts, share invite links, and track student progress.',
+    newGroupName: 'New group name',
+    courseNumericId: 'Course numeric ID',
+    createGroup: 'Create group',
+    groups: 'Groups',
+    totalMembers: 'Total members',
+    activeInvites: 'Active invites',
+    avgProgress: 'Avg. progress',
+    studentsCreated: 'students, created',
+    refreshInvite: 'Refresh invite',
+    inviteRefreshed: 'Invite refreshed',
+    inviteLink: 'Invite link',
+    expiresUsed: 'Expires',
+    usedTimes: 'uses',
+    progress: 'Progress',
+    avgGrade: 'Avg. grade',
+  },
+} as const;
 
 export function TeacherGroupsPage() {
   const { user } = useAuth();
+  const { language } = useI18n();
+  const text = copy[language];
   const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [groupName, setGroupName] = useState('');
-  const [courseId, setCourseId] = useState('course-2');
+  const [courseId, setCourseId] = useState('1');
   const [inviteNotice, setInviteNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,9 +70,9 @@ export function TeacherGroupsPage() {
   return (
     <div className="stack-xl">
       <PageIntro
-        eyebrow="Teacher space"
-        title="Student groups"
-        description="Создание когорт, раздача invite-links и обзор прогресса студентов по группам."
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
         actions={
           <form
             className="inline-form"
@@ -44,33 +90,33 @@ export function TeacherGroupsPage() {
             <input
               value={groupName}
               onChange={(event) => setGroupName(event.target.value)}
-              placeholder="New group name"
+              placeholder={text.newGroupName}
             />
             <input
               value={courseId}
               onChange={(event) => setCourseId(event.target.value)}
-              placeholder="Course ID"
+              placeholder={text.courseNumericId}
             />
-            <button type="submit" className="primary-button">Create group</button>
+            <button type="submit" className="primary-button">{text.createGroup}</button>
           </form>
         }
       />
 
       <section className="stats-grid">
         <article className="stat-card stat-card--highlight">
-          <span>Groups</span>
+          <span>{text.groups}</span>
           <strong>{groups.length}</strong>
         </article>
         <article className="stat-card">
-          <span>Total members</span>
+          <span>{text.totalMembers}</span>
           <strong>{totalMembers}</strong>
         </article>
         <article className="stat-card">
-          <span>Active invites</span>
+          <span>{text.activeInvites}</span>
           <strong>{groups.filter((group) => Boolean(group.invite.token)).length}</strong>
         </article>
         <article className="stat-card">
-          <span>Avg. progress</span>
+          <span>{text.avgProgress}</span>
           <strong>
             {groups.length
               ? Math.round(
@@ -93,7 +139,7 @@ export function TeacherGroupsPage() {
               <div>
                 <p className="eyebrow">{group.courseTitle}</p>
                 <h3>{group.name}</h3>
-                <p>{group.memberCount} students, created {group.createdAt}</p>
+                <p>{group.memberCount} {text.studentsCreated} {group.createdAt}</p>
               </div>
               <div className="action-row">
                 <button
@@ -101,20 +147,20 @@ export function TeacherGroupsPage() {
                   className="ghost-button"
                   onClick={() => {
                     void createInvite(group.id).then((invite) => {
-                      setInviteNotice(`Invite refreshed: ${invite.inviteUrl}`);
+                      setInviteNotice(`${text.inviteRefreshed}: ${invite.inviteUrl}`);
                     });
                   }}
                 >
-                  Refresh invite
+                  {text.refreshInvite}
                 </button>
                 <span className="pill pill--open">{group.invite.token}</span>
               </div>
             </div>
 
             <div className="invite-panel">
-              <strong>Invite link</strong>
+              <strong>{text.inviteLink}</strong>
               <span>{group.invite.inviteUrl}</span>
-              <small>Expires {group.invite.expiresAt} · used {group.invite.usageCount} times</small>
+              <small>{text.expiresUsed} {group.invite.expiresAt} · {group.invite.usageCount} {text.usedTimes}</small>
             </div>
 
             <div className="member-grid">
@@ -123,8 +169,8 @@ export function TeacherGroupsPage() {
                   <strong>{member.fullName}</strong>
                   <span>{member.email}</span>
                   <div className="member-card__metrics">
-                    <span>Progress {member.progress}%</span>
-                    <span>Avg. grade {member.averageGrade}</span>
+                    <span>{text.progress} {member.progress}%</span>
+                    <span>{text.avgGrade} {member.averageGrade}</span>
                   </div>
                 </article>
               ))}
@@ -135,4 +181,3 @@ export function TeacherGroupsPage() {
     </div>
   );
 }
-

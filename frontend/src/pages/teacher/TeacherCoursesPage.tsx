@@ -1,11 +1,47 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageIntro } from '../../components/PageIntro';
 import { fetchTeacherCourses } from '../../api/services/courses';
 import { useAuth } from '../../auth/AuthContext';
+import { useI18n } from '../../i18n/I18nContext';
+import { enrollmentStatusLabel, localeFor } from '../../i18n/format';
 import type { Course } from '../../types/models';
+
+const copy = {
+  ru: {
+    eyebrow: 'Пространство преподавателя',
+    title: 'Мои курсы',
+    description: 'Курсы преподавателя, их готовность к запуску и площадка для дальнейшего CRUD.',
+    createCourse: 'Создать курс',
+    authoredCourses: 'Авторские курсы',
+    freeElectives: 'Бесплатные курсы',
+    avgRating: 'Средний рейтинг',
+    upcomingStarts: 'Ближайшие старты',
+    teacher: 'Преподаватель',
+    free: 'Бесплатно',
+    weeks: 'недель',
+    seatsLeft: 'мест осталось',
+  },
+  en: {
+    eyebrow: 'Teacher space',
+    title: 'My courses',
+    description: 'Teacher-owned courses, launch readiness, and future CRUD workflow.',
+    createCourse: 'Create course',
+    authoredCourses: 'Authored courses',
+    freeElectives: 'Free electives',
+    avgRating: 'Avg. rating',
+    upcomingStarts: 'Upcoming starts',
+    teacher: 'Teacher',
+    free: 'Free',
+    weeks: 'weeks',
+    seatsLeft: 'seats left',
+  },
+} as const;
 
 export function TeacherCoursesPage() {
   const { user } = useAuth();
+  const { language } = useI18n();
+  const text = copy[language];
+  const locale = localeFor(language);
   const [courses, setCourses] = useState<Course[]>([]);
 
   useEffect(() => {
@@ -21,27 +57,27 @@ export function TeacherCoursesPage() {
   return (
     <div className="stack-xl">
       <PageIntro
-        eyebrow="Teacher space"
-        title="My courses"
-        description="Курсы преподавателя, их готовность к запуску и площадка для дальнейшего подключения CRUD."
-        actions={<button className="primary-button">Create course</button>}
+        eyebrow={text.eyebrow}
+        title={text.title}
+        description={text.description}
+        actions={<button className="primary-button">{text.createCourse}</button>}
       />
 
       <section className="stats-grid">
         <article className="stat-card stat-card--highlight">
-          <span>Authored courses</span>
+          <span>{text.authoredCourses}</span>
           <strong>{authored.length}</strong>
         </article>
         <article className="stat-card">
-          <span>Free electives</span>
+          <span>{text.freeElectives}</span>
           <strong>{authored.filter((course) => course.price === 0).length}</strong>
         </article>
         <article className="stat-card">
-          <span>Avg. rating</span>
+          <span>{text.avgRating}</span>
           <strong>{authored.length ? (authored.reduce((sum, course) => sum + course.rating, 0) / authored.length).toFixed(1) : '0.0'}</strong>
         </article>
         <article className="stat-card">
-          <span>Upcoming starts</span>
+          <span>{text.upcomingStarts}</span>
           <strong>{authored.filter((course) => course.enrollmentStatus !== 'waitlist').length}</strong>
         </article>
       </section>
@@ -50,8 +86,8 @@ export function TeacherCoursesPage() {
         {authored.map((course) => (
           <article key={course.id} className="course-card">
             <div className="course-card__header">
-              <span className="pill pill--role">teacher</span>
-              <span className={`pill pill--${course.enrollmentStatus}`}>{course.enrollmentStatus}</span>
+              <span className="pill pill--role">{text.teacher}</span>
+              <span className={`pill pill--${course.enrollmentStatus}`}>{enrollmentStatusLabel(course.enrollmentStatus, language)}</span>
             </div>
             <h3>{course.title}</h3>
             <p>{course.description}</p>
@@ -62,12 +98,12 @@ export function TeacherCoursesPage() {
             </div>
             <div className="course-footer">
               <div>
-                <strong>{course.price === 0 ? 'Free' : `${course.price.toLocaleString('ru-RU')} RUB`}</strong>
-                <span>{course.durationWeeks} weeks</span>
+                <strong>{course.price === 0 ? text.free : `${course.price.toLocaleString(locale)} RUB`}</strong>
+                <span>{course.durationWeeks} {text.weeks}</span>
               </div>
               <div>
                 <strong>{course.rating.toFixed(1)}</strong>
-                <span>{course.seatsLeft} seats left</span>
+                <span>{course.seatsLeft} {text.seatsLeft}</span>
               </div>
             </div>
           </article>
@@ -76,4 +112,3 @@ export function TeacherCoursesPage() {
     </div>
   );
 }
-

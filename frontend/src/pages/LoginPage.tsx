@@ -1,8 +1,10 @@
 import { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { LanguageToggle } from '../components/LanguageToggle';
+import { useI18n } from '../i18n/I18nContext';
 import type { RegisterPayload, Role } from '../types/models';
 
 function resolveHome(role: Role) {
@@ -29,8 +31,77 @@ function resolveErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+const copy = {
+  ru: {
+    title: 'Платформа для студентов, преподавателей и ассистентов',
+    description:
+      'Студентам доступен каталог и оценки. Преподаватели и ассистенты управляют группами, инвайтами и результатами.',
+    studentFlow: 'Студенческий контур',
+    studentFlowDesc: 'Каталог, мои курсы, оценки и профиль.',
+    teacherFlow: 'Преподавательский контур',
+    teacherFlowDesc: 'Курсы, учебные группы, инвайты и оценивание.',
+    assistantFlow: 'Контур ассистента',
+    assistantFlowDesc: 'Поддержка групп и выставление оценок.',
+    authentication: 'Аутентификация',
+    signIn: 'Вход',
+    createAccount: 'Создать аккаунт',
+    selfRegister:
+      'Саморегистрация доступна только для ролей student и teacher. Ассистенты и администраторы создаются через служебный контур.',
+    loginTab: 'Войти',
+    registerTab: 'Регистрация',
+    student: 'Студент',
+    teacher: 'Преподаватель',
+    assistant: 'Ассистент',
+    fullName: 'ФИО',
+    email: 'Email',
+    password: 'Пароль',
+    emailPlaceholder: 'name@edu.hse.ru',
+    passwordPlaceholder: 'Введите пароль',
+    loginFailed: 'Ошибка входа. Проверьте логин и пароль.',
+    registerFailed: 'Ошибка регистрации. Попробуйте другой email или повторите позже.',
+    signingIn: 'Входим...',
+    creatingAccount: 'Создаем аккаунт...',
+    openWorkspace: 'Открыть рабочее пространство',
+    createWorkspaceAccount: 'Создать рабочий аккаунт',
+  },
+  en: {
+    title: 'Platform for students, teachers, and assistants',
+    description:
+      'Students use catalog and grades. Teachers and assistants manage groups, invite links, and assessment.',
+    studentFlow: 'Student flow',
+    studentFlowDesc: 'Catalog, my courses, grades, and profile.',
+    teacherFlow: 'Teacher flow',
+    teacherFlowDesc: 'Courses, study groups, invites, and grading.',
+    assistantFlow: 'Assistant flow',
+    assistantFlowDesc: 'Group support and grading operations.',
+    authentication: 'Authentication',
+    signIn: 'Sign in',
+    createAccount: 'Create account',
+    selfRegister:
+      'Self-registration is available only for student and teacher roles. Assistants and administrators are provisioned through the service flow.',
+    loginTab: 'Login',
+    registerTab: 'Register',
+    student: 'Student',
+    teacher: 'Teacher',
+    assistant: 'Assistant',
+    fullName: 'Full name',
+    email: 'Email',
+    password: 'Password',
+    emailPlaceholder: 'name@edu.hse.ru',
+    passwordPlaceholder: 'Enter your password',
+    loginFailed: 'Login failed. Please verify credentials.',
+    registerFailed: 'Registration failed. Please try a different email or try again later.',
+    signingIn: 'Signing in...',
+    creatingAccount: 'Creating account...',
+    openWorkspace: 'Open workspace',
+    createWorkspaceAccount: 'Create workspace account',
+  },
+} as const;
+
 export function LoginPage() {
   const { isAuthenticated, login, register, role } = useAuth();
+  const { language } = useI18n();
+  const text = copy[language];
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<AuthMode>('login');
@@ -61,7 +132,7 @@ export function LoginPage() {
       await login({ email, password, role: loginRole });
       navigate(redirectTarget, { replace: true });
     } catch (nextError: unknown) {
-      setError(resolveErrorMessage(nextError, 'Login failed. Please verify credentials and try again.'));
+      setError(resolveErrorMessage(nextError, text.loginFailed));
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +154,7 @@ export function LoginPage() {
       await register(payload);
       navigate(resolveHome(registerRole), { replace: true });
     } catch (nextError: unknown) {
-      setError(resolveErrorMessage(nextError, 'Registration failed. Please try a different email or try again later.'));
+      setError(resolveErrorMessage(nextError, text.registerFailed));
     } finally {
       setSubmitting(false);
     }
@@ -92,25 +163,25 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <section className="login-panel login-panel--hero">
-        <span className="brand-badge">MSE-MOOC</span>
-        <h1>Digital campus for students, teachers, and teaching assistants.</h1>
-        <p>
-          Student space focuses on discovery and grades. Teacher space adds authoring,
-          cohort invites and assessment. Assistant space helps run groups and grading.
-        </p>
+        <div className="login-hero-head">
+          <span className="brand-badge">MSE-MOOC</span>
+          <LanguageToggle />
+        </div>
+        <h1>{text.title}</h1>
+        <p>{text.description}</p>
 
         <div className="feature-grid">
           <article className="feature-card">
-            <strong>Student flow</strong>
-            <span>Каталог курсов, мои записи, оценки и профиль студента.</span>
+            <strong>{text.studentFlow}</strong>
+            <span>{text.studentFlowDesc}</span>
           </article>
           <article className="feature-card">
-            <strong>Teacher flow</strong>
-            <span>Новые курсы, учебные группы, инвайт-ссылки и выставление оценок.</span>
+            <strong>{text.teacherFlow}</strong>
+            <span>{text.teacherFlowDesc}</span>
           </article>
           <article className="feature-card">
-            <strong>Operations flow</strong>
-            <span>Административный доступ работает через отдельный служебный вход.</span>
+            <strong>{text.assistantFlow}</strong>
+            <span>{text.assistantFlowDesc}</span>
           </article>
         </div>
       </section>
@@ -118,11 +189,9 @@ export function LoginPage() {
       <section className="login-panel login-panel--form">
         <div className="page-intro page-intro--compact">
           <div>
-            <p className="eyebrow">Authentication</p>
-            <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
-            <p className="page-intro__description">
-              Саморегистрация доступна только для `student` и `teacher`. Админ-вход вынесен в отдельный служебный маршрут.
-            </p>
+            <p className="eyebrow">{text.authentication}</p>
+            <h2>{mode === 'login' ? text.signIn : text.createAccount}</h2>
+            <p className="page-intro__description">{text.selfRegister}</p>
           </div>
         </div>
 
@@ -132,14 +201,14 @@ export function LoginPage() {
             className={mode === 'login' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
             onClick={() => setMode('login')}
           >
-            Login
+            {text.loginTab}
           </button>
           <button
             type="button"
             className={mode === 'register' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
             onClick={() => setMode('register')}
           >
-            Register
+            {text.registerTab}
           </button>
         </div>
 
@@ -152,21 +221,21 @@ export function LoginPage() {
                   className={loginRole === 'student' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
                   onClick={() => setLoginRole('student')}
                 >
-                  Student
+                  {text.student}
                 </button>
                 <button
                   type="button"
                   className={loginRole === 'teacher' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
                   onClick={() => setLoginRole('teacher')}
                 >
-                  Teacher
+                  {text.teacher}
                 </button>
                 <button
                   type="button"
                   className={loginRole === 'teacher_assistant' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
                   onClick={() => setLoginRole('teacher_assistant')}
                 >
-                  Assistant
+                  {text.assistant}
                 </button>
               </>
             ) : (
@@ -176,14 +245,14 @@ export function LoginPage() {
                   className={registerRole === 'student' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
                   onClick={() => setRegisterRole('student')}
                 >
-                  Student
+                  {text.student}
                 </button>
                 <button
                   type="button"
                   className={registerRole === 'teacher' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
                   onClick={() => setRegisterRole('teacher')}
                 >
-                  Teacher
+                  {text.teacher}
                 </button>
               </>
             )}
@@ -191,7 +260,7 @@ export function LoginPage() {
 
           {mode === 'register' ? (
             <label>
-              Full name
+              {text.fullName}
               <input
                 type="text"
                 value={fullName}
@@ -203,23 +272,23 @@ export function LoginPage() {
           ) : null}
 
           <label>
-            Email
+            {text.email}
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@edu.hse.ru"
+              placeholder={text.emailPlaceholder}
               required
             />
           </label>
 
           <label>
-            Password
+            {text.password}
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter your password"
+              placeholder={text.passwordPlaceholder}
               required
             />
           </label>
@@ -229,16 +298,12 @@ export function LoginPage() {
           <button type="submit" className="primary-button" disabled={submitting}>
             {submitting
               ? mode === 'login'
-                ? 'Signing in...'
-                : 'Creating account...'
+                ? text.signingIn
+                : text.creatingAccount
               : mode === 'login'
-                ? 'Open workspace'
-                : 'Create workspace account'}
+                ? text.openWorkspace
+                : text.createWorkspaceAccount}
           </button>
-
-          <p className="auth-form__hint">
-            Admin sign-in: <Link to="/staff/admin-login">service-only access</Link>.
-          </p>
         </form>
       </section>
     </div>

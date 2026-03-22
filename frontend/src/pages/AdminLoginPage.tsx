@@ -3,6 +3,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { LanguageToggle } from '../components/LanguageToggle';
+import { useI18n } from '../i18n/I18nContext';
 import type { Role } from '../types/models';
 
 function resolveHome(role: Role) {
@@ -27,8 +29,43 @@ function resolveErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+const copy = {
+  ru: {
+    title: 'Служебный шлюз администратора',
+    description:
+      'Страница предназначена только для операционного доступа платформы. Для обычного входа используйте публичную страницу.',
+    restrictedAccess: 'Ограниченный доступ',
+    adminSignIn: 'Вход администратора',
+    adminHint: 'Используйте корпоративные учетные данные администратора.',
+    loginOrEmail: 'Логин или email',
+    password: 'Пароль',
+    passwordPlaceholder: 'Введите админ-пароль',
+    adminLoginFailed: 'Ошибка админ-входа. Проверьте учетные данные.',
+    signingIn: 'Входим...',
+    enterAdminConsole: 'Перейти в админ-панель',
+    backToRegular: 'Вернуться на обычный вход',
+  },
+  en: {
+    title: 'Admin service gateway',
+    description:
+      'This page is intended for platform operations only. Use the public sign-in page for regular access.',
+    restrictedAccess: 'Restricted Access',
+    adminSignIn: 'Admin sign in',
+    adminHint: 'Use corporate administrator credentials.',
+    loginOrEmail: 'Login or email',
+    password: 'Password',
+    passwordPlaceholder: 'Enter admin password',
+    adminLoginFailed: 'Admin login failed. Check credentials.',
+    signingIn: 'Signing in...',
+    enterAdminConsole: 'Enter admin console',
+    backToRegular: 'Back to regular sign-in',
+  },
+} as const;
+
 export function AdminLoginPage() {
   const { isAuthenticated, login, role } = useAuth();
+  const { language } = useI18n();
+  const text = copy[language];
   const navigate = useNavigate();
   const [email, setEmail] = useState('admin@example.com');
   const [password, setPassword] = useState('admin123');
@@ -48,7 +85,7 @@ export function AdminLoginPage() {
       await login({ email, password, role: 'admin' });
       navigate('/admin', { replace: true });
     } catch (nextError: unknown) {
-      setError(resolveErrorMessage(nextError, 'Admin login failed. Check credentials.'));
+      setError(resolveErrorMessage(nextError, text.adminLoginFailed));
     } finally {
       setSubmitting(false);
     }
@@ -57,28 +94,26 @@ export function AdminLoginPage() {
   return (
     <div className="login-page">
       <section className="login-panel login-panel--hero">
-        <span className="brand-badge">MSE-MOOC</span>
-        <h1>Admin service gateway.</h1>
-        <p>
-          This page is intended for platform operations only.
-          If you are a student, teacher, or assistant, use the regular sign-in page.
-        </p>
+        <div className="login-hero-head">
+          <span className="brand-badge">MSE-MOOC</span>
+          <LanguageToggle />
+        </div>
+        <h1>{text.title}</h1>
+        <p>{text.description}</p>
       </section>
 
       <section className="login-panel login-panel--form">
         <div className="page-intro page-intro--compact">
           <div>
-            <p className="eyebrow">Restricted Access</p>
-            <h2>Admin sign in</h2>
-            <p className="page-intro__description">
-              Используйте корпоративные учетные данные администратора платформы.
-            </p>
+            <p className="eyebrow">{text.restrictedAccess}</p>
+            <h2>{text.adminSignIn}</h2>
+            <p className="page-intro__description">{text.adminHint}</p>
           </div>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            Login or email
+            {text.loginOrEmail}
             <input
               type="text"
               value={email}
@@ -89,12 +124,12 @@ export function AdminLoginPage() {
           </label>
 
           <label>
-            Password
+            {text.password}
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter admin password"
+              placeholder={text.passwordPlaceholder}
               required
             />
           </label>
@@ -102,11 +137,11 @@ export function AdminLoginPage() {
           {error ? <div className="form-error">{error}</div> : null}
 
           <button type="submit" className="primary-button" disabled={submitting}>
-            {submitting ? 'Signing in...' : 'Enter admin console'}
+            {submitting ? text.signingIn : text.enterAdminConsole}
           </button>
 
           <p className="auth-form__hint">
-            <Link to="/login">Back to regular sign-in</Link>
+            <Link to="/login">{text.backToRegular}</Link>
           </p>
         </form>
       </section>
