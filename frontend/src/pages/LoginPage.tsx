@@ -1,6 +1,7 @@
-﻿import { useMemo, useState } from 'react';
+import { AxiosError } from 'axios';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { RegisterPayload, Role } from '../types/models';
 
@@ -9,7 +10,7 @@ function resolveHome(role: Role) {
     return '/admin';
   }
 
-  if (role === 'teacher') {
+  if (role === 'teacher' || role === 'teacher_assistant') {
     return '/teacher/courses';
   }
 
@@ -17,6 +18,16 @@ function resolveHome(role: Role) {
 }
 
 type AuthMode = 'login' | 'register';
+
+function resolveErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof AxiosError) {
+    const apiError = (error.response?.data as { error?: string } | undefined)?.error;
+    if (apiError) {
+      return apiError;
+    }
+  }
+  return fallback;
+}
 
 export function LoginPage() {
   const { isAuthenticated, login, register, role } = useAuth();
@@ -26,7 +37,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('student@edu.hse.ru');
   const [password, setPassword] = useState('demo-password');
   const [fullName, setFullName] = useState('Anastasia Volkova');
-  const [loginRole, setLoginRole] = useState<Role>('student');
+  const [loginRole, setLoginRole] = useState<Exclude<Role, 'admin'>>('student');
   const [registerRole, setRegisterRole] = useState<Extract<Role, 'student' | 'teacher'>>('student');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +60,8 @@ export function LoginPage() {
     try {
       await login({ email, password, role: loginRole });
       navigate(redirectTarget, { replace: true });
-    } catch {
-      setError('Login failed. Please verify credentials and try again.');
+    } catch (nextError: unknown) {
+      setError(resolveErrorMessage(nextError, 'Login failed. Please verify credentials and try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -71,8 +82,8 @@ export function LoginPage() {
     try {
       await register(payload);
       navigate(resolveHome(registerRole), { replace: true });
-    } catch {
-      setError('Registration failed. Please try a different email or try again later.');
+    } catch (nextError: unknown) {
+      setError(resolveErrorMessage(nextError, 'Registration failed. Please try a different email or try again later.'));
     } finally {
       setSubmitting(false);
     }
@@ -82,10 +93,10 @@ export function LoginPage() {
     <div className="login-page">
       <section className="login-panel login-panel--hero">
         <span className="brand-badge">MSE-MOOC</span>
-        <h1>Digital campus for students, teachers, and platform administrators.</h1>
+        <h1>Digital campus for students, teachers, and teaching assistants.</h1>
         <p>
           Student space focuses on discovery and grades. Teacher space adds authoring,
-          cohort invites and assessment. Admin space keeps the whole platform under control.
+          cohort invites and assessment. Assistant space helps run groups and grading.
         </p>
 
         <div className="feature-grid">
@@ -98,8 +109,8 @@ export function LoginPage() {
             <span>Новые курсы, учебные группы, инвайт-ссылки и выставление оценок.</span>
           </article>
           <article className="feature-card">
-            <strong>Admin flow</strong>
-            <span>Управление пользователями, курсами и политиками платформы.</span>
+            <strong>Operations flow</strong>
+            <span>Административный доступ работает через отдельный служебный вход.</span>
           </article>
         </div>
       </section>
@@ -110,7 +121,7 @@ export function LoginPage() {
             <p className="eyebrow">Authentication</p>
             <h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
             <p className="page-intro__description">
-              Саморегистрация доступна только для `student` и `teacher`. Роль `admin` доступна только для входа.
+              Саморегистрация доступна только для `student` и `teacher`. Админ-вход вынесен в отдельный служебный маршрут.
             </p>
           </div>
         </div>
@@ -152,10 +163,10 @@ export function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  className={loginRole === 'admin' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
-                  onClick={() => setLoginRole('admin')}
+                  className={loginRole === 'teacher_assistant' ? 'role-toggle__item role-toggle__item--active' : 'role-toggle__item'}
+                  onClick={() => setLoginRole('teacher_assistant')}
                 >
-                  Admin
+                  Assistant
                 </button>
               </>
             ) : (
@@ -224,9 +235,12 @@ export function LoginPage() {
                 ? 'Open workspace'
                 : 'Create workspace account'}
           </button>
+
+          <p className="auth-form__hint">
+            Admin sign-in: <Link to="/staff/admin-login">service-only access</Link>.
+          </p>
         </form>
       </section>
     </div>
   );
 }
-

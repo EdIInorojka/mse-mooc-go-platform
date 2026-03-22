@@ -304,6 +304,17 @@ input {
   color: #ffb4b4;
 }
 
+.auth-form__hint {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.auth-form__hint a {
+  color: var(--accent-alt);
+  text-decoration: none;
+}
+
 .shell {
   min-height: 100vh;
   display: grid;

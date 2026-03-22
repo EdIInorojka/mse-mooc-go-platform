@@ -44,7 +44,6 @@ export async function loginRequest(credentials: LoginCredentials): Promise<AuthS
     const response = await apiClient.post<BackendAuthResponse>('/auth/login', {
       login_or_email: credentials.email,
       password: credentials.password,
-      role: credentials.role,
     });
     return toAuthSession(response.data);
   } catch (error: unknown) {
@@ -59,7 +58,6 @@ export async function registerRequest(payload: RegisterPayload): Promise<AuthSes
   try {
     const response = await apiClient.post<BackendAuthResponse>('/auth/register', {
       login: payload.email,
-      full_name: payload.fullName,
       email: payload.email,
       password: payload.password,
       role: payload.role,

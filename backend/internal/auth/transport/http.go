@@ -47,11 +47,13 @@ type registerRequest struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
+	FullName string `json:"full_name,omitempty"`
 }
 
 type loginRequest struct {
 	LoginOrEmail string `json:"login_or_email"`
 	Password     string `json:"password"`
+	Role         string `json:"role,omitempty"`
 }
 
 type refreshRequest struct {
@@ -64,7 +66,12 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "invalid json")
 		return
 	}
-	user, tokens, err := h.svc.Register(r.Context(), app.RegisterInput(req))
+	user, tokens, err := h.svc.Register(r.Context(), app.RegisterInput{
+		Login:    req.Login,
+		Password: req.Password,
+		Email:    req.Email,
+		Role:     req.Role,
+	})
 	switch {
 	case errors.Is(err, app.ErrUserExists):
 		httpx.Error(w, http.StatusConflict, err.Error())
@@ -88,7 +95,10 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "invalid json")
 		return
 	}
-	user, tokens, err := h.svc.Login(r.Context(), app.LoginInput(req))
+	user, tokens, err := h.svc.Login(r.Context(), app.LoginInput{
+		LoginOrEmail: req.LoginOrEmail,
+		Password:     req.Password,
+	})
 	switch {
 	case errors.Is(err, app.ErrInvalidCredentials):
 		httpx.Error(w, http.StatusUnauthorized, err.Error())

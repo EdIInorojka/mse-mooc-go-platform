@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PortalLayout } from './components/PortalLayout';
 import { LoginPage } from './pages/LoginPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
 import { CourseCatalogPage } from './pages/user/CourseCatalogPage';
 import { MyCoursesPage } from './pages/user/MyCoursesPage';
 import { ProfilePage } from './pages/user/ProfilePage';
@@ -20,7 +21,7 @@ function resolveHome(role: Role) {
     return '/admin';
   }
 
-  if (role === 'teacher') {
+  if (role === 'teacher' || role === 'teacher_assistant') {
     return '/teacher/courses';
   }
 
@@ -41,6 +42,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/staff/admin-login" element={<AdminLoginPage />} />
 
       <Route element={<ProtectedRoute allowedRoles={['student']} />}>
         <Route path="/app" element={<PortalLayout role="student" />}>
@@ -52,7 +54,7 @@ function App() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+      <Route element={<ProtectedRoute allowedRoles={['teacher', 'teacher_assistant']} />}>
         <Route path="/teacher" element={<PortalLayout role="teacher" />}>
           <Route index element={<Navigate to="courses" replace />} />
           <Route path="courses" element={<TeacherCoursesPage />} />
