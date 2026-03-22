@@ -16,6 +16,7 @@ import (
 	"mse-mooc/backend/internal/shared/database"
 	"mse-mooc/backend/internal/shared/events"
 	"mse-mooc/backend/internal/shared/httpx"
+	"mse-mooc/backend/internal/shared/seed"
 	"mse-mooc/backend/migrations"
 )
 
@@ -26,7 +27,7 @@ func main() {
 	accessTTL := config.EnvDuration("JWT_ACCESS_TTL", 15*time.Minute)
 	refreshTTL := config.EnvDuration("JWT_REFRESH_TTL", 7*24*time.Hour)
 	databaseURL := config.Env("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/mse_mooc?sslmode=disable")
-	kafkaBrokers := config.EnvList("KAFKA_BROKERS", []string{"localhost:9092"})
+	kafkaBrokers := config.EnvList("KAFKA_BROKERS", []string{})
 
 	db, err := database.Open(ctx, databaseURL)
 	if err != nil {
@@ -46,6 +47,13 @@ func main() {
 	tm := sharedauth.NewTokenManager(jwtSecret, accessTTL, refreshTTL, "auth-service")
 	repo := app.NewPostgresUserRepository(db)
 	svc := app.NewService(repo, tm, publisher)
+	if config.EnvBool("DEMO_SEED", true) {
+		if err := seed.SeedDemoData(ctx, db, seed.DemoConfig{
+			Reset: config.EnvBool("DEMO_SEED_RESET", false),
+		}); err != nil {
+			log.Fatalf("auth-service demo seed failed: %v", err)
+		}
+	}
 	if err := svc.EnsureAdminUser(ctx, config.Env("ADMIN_LOGIN", "admin"), config.Env("ADMIN_EMAIL", "admin@example.com"), config.Env("ADMIN_PASSWORD", "admin123")); err != nil {
 		log.Fatalf("auth-service ensure admin failed: %v", err)
 	}
