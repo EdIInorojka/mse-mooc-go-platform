@@ -1,0 +1,280 @@
+﻿import type {
+  AuthSession,
+  Course,
+  DashboardMetrics,
+  GradeRecord,
+  PlatformUser,
+  RegisterPayload,
+  Role,
+  StudentGroup,
+} from '../types/models';
+
+export const mockCourses: Course[] = [
+  {
+    id: 'course-1',
+    title: 'Data-Driven Product Analytics',
+    provider: 'HSE x Yandex Practicum',
+    category: 'Analytics',
+    language: 'Russian',
+    durationWeeks: 8,
+    price: 0,
+    rating: 4.8,
+    seatsLeft: 42,
+    startDate: '2026-04-02',
+    description: 'Практический курс по аналитике продукта, A/B-тестам и принятию решений на данных.',
+    enrollmentStatus: 'open',
+    audience: 'student',
+  },
+  {
+    id: 'course-2',
+    title: 'Distributed Systems for Platform Teams',
+    provider: 'HSE Engineering School',
+    category: 'Software Engineering',
+    language: 'English',
+    durationWeeks: 10,
+    price: 12000,
+    rating: 4.9,
+    seatsLeft: 15,
+    startDate: '2026-04-18',
+    description: 'От CAP-теоремы до надежных backend-паттернов и эксплуатации сервисов под нагрузкой.',
+    enrollmentStatus: 'enrolled',
+    audience: 'mixed',
+  },
+  {
+    id: 'course-3',
+    title: 'Cybersecurity for Digital Education',
+    provider: 'HSE x Kaspersky',
+    category: 'Security',
+    language: 'Russian',
+    durationWeeks: 6,
+    price: 6000,
+    rating: 4.6,
+    seatsLeft: 9,
+    startDate: '2026-05-06',
+    description: 'Основы безопасной архитектуры, IAM, угрозы для EdTech и защита персональных данных.',
+    enrollmentStatus: 'open',
+    audience: 'teacher',
+  },
+  {
+    id: 'course-4',
+    title: 'Service Design for MOOC Platforms',
+    provider: 'HSE Design Lab',
+    category: 'Product Design',
+    language: 'English',
+    durationWeeks: 5,
+    price: 4000,
+    rating: 4.5,
+    seatsLeft: 27,
+    startDate: '2026-04-25',
+    description: 'Проектирование образовательных сервисов, CJM, дизайн-метрики и UX-исследования.',
+    enrollmentStatus: 'waitlist',
+    audience: 'mixed',
+  },
+];
+
+export const mockUsers: PlatformUser[] = [
+  {
+    id: 'student-1',
+    fullName: 'Anastasia Volkova',
+    email: 'a.volkova@edu.hse.ru',
+    role: 'student',
+    status: 'active',
+    enrolledCourses: 3,
+    lastSeen: '2 min ago',
+  },
+  {
+    id: 'student-2',
+    fullName: 'Daniil Petrov',
+    email: 'd.petrov@edu.hse.ru',
+    role: 'student',
+    status: 'invited',
+    enrolledCourses: 1,
+    lastSeen: '1 h ago',
+  },
+  {
+    id: 'teacher-1',
+    fullName: 'Elena Smirnova',
+    email: 'e.smirnova@hse.ru',
+    role: 'teacher',
+    status: 'active',
+    enrolledCourses: 4,
+    lastSeen: 'online',
+  },
+  {
+    id: 'admin-1',
+    fullName: 'Admin Operator',
+    email: 'admin@hse.ru',
+    role: 'admin',
+    status: 'active',
+    enrolledCourses: 0,
+    lastSeen: 'online',
+  },
+];
+
+export const mockMetrics: DashboardMetrics = {
+  activeStudents: 1842,
+  activeTeachers: 87,
+  activeCourses: 37,
+  completionRate: 78,
+  weeklyEnrollments: 264,
+};
+
+export const mockGroups: StudentGroup[] = [
+  {
+    id: 'group-1',
+    name: 'SE-241 Backend Cohort',
+    courseId: 'course-2',
+    courseTitle: 'Distributed Systems for Platform Teams',
+    teacherId: 'teacher-1',
+    teacherName: 'Elena Smirnova',
+    memberCount: 3,
+    createdAt: '2026-03-10',
+    invite: {
+      id: 'invite-1',
+      token: 'SE241SPRING',
+      inviteUrl: 'https://mse-mooc.local/invite/SE241SPRING',
+      expiresAt: '2026-04-30',
+      usageCount: 3,
+    },
+    members: [
+      {
+        id: 'student-1',
+        fullName: 'Anastasia Volkova',
+        email: 'a.volkova@edu.hse.ru',
+        progress: 76,
+        averageGrade: 89,
+      },
+      {
+        id: 'student-2',
+        fullName: 'Daniil Petrov',
+        email: 'd.petrov@edu.hse.ru',
+        progress: 54,
+        averageGrade: 74,
+      },
+      {
+        id: 'student-3',
+        fullName: 'Maria Orlova',
+        email: 'm.orlova@edu.hse.ru',
+        progress: 91,
+        averageGrade: 95,
+      },
+    ],
+  },
+  {
+    id: 'group-2',
+    name: 'Cybersecurity Intensive',
+    courseId: 'course-3',
+    courseTitle: 'Cybersecurity for Digital Education',
+    teacherId: 'teacher-1',
+    teacherName: 'Elena Smirnova',
+    memberCount: 2,
+    createdAt: '2026-03-14',
+    invite: {
+      id: 'invite-2',
+      token: 'CYBERSAFE26',
+      inviteUrl: 'https://mse-mooc.local/invite/CYBERSAFE26',
+      expiresAt: '2026-05-15',
+      usageCount: 2,
+    },
+    members: [
+      {
+        id: 'student-4',
+        fullName: 'Kirill Romanov',
+        email: 'k.romanov@edu.hse.ru',
+        progress: 48,
+        averageGrade: 67,
+      },
+      {
+        id: 'student-5',
+        fullName: 'Olga Tikhonova',
+        email: 'o.tikhonova@edu.hse.ru',
+        progress: 83,
+        averageGrade: 92,
+      },
+    ],
+  },
+];
+
+export const mockGrades: GradeRecord[] = [
+  {
+    id: 'grade-1',
+    courseId: 'course-2',
+    courseTitle: 'Distributed Systems for Platform Teams',
+    groupId: 'group-1',
+    groupName: 'SE-241 Backend Cohort',
+    studentId: 'student-1',
+    studentName: 'Anastasia Volkova',
+    score: 89,
+    maxScore: 100,
+    assignedAt: '2026-03-20',
+    status: 'published',
+    feedback: 'Сильная архитектурная часть и хорошая работа с observability.',
+  },
+  {
+    id: 'grade-2',
+    courseId: 'course-2',
+    courseTitle: 'Distributed Systems for Platform Teams',
+    groupId: 'group-1',
+    groupName: 'SE-241 Backend Cohort',
+    studentId: 'student-2',
+    studentName: 'Daniil Petrov',
+    score: 74,
+    maxScore: 100,
+    assignedAt: '2026-03-19',
+    status: 'published',
+    feedback: 'Нужна более строгая работа с очередями и обработкой ошибок.',
+  },
+  {
+    id: 'grade-3',
+    courseId: 'course-3',
+    courseTitle: 'Cybersecurity for Digital Education',
+    groupId: 'group-2',
+    groupName: 'Cybersecurity Intensive',
+    studentId: 'student-4',
+    studentName: 'Kirill Romanov',
+    score: 67,
+    maxScore: 100,
+    assignedAt: '2026-03-18',
+    status: 'draft',
+    feedback: 'Нужно аккуратнее проработать threat model и IAM flow.',
+  },
+];
+
+export function buildDemoSession(email: string, role: Role): AuthSession {
+  const displayNameMap: Record<Role, string> = {
+    student: 'Student Explorer',
+    teacher: 'Teacher Studio',
+    admin: 'Admin Operator',
+  };
+
+  const idMap: Record<Role, string> = {
+    student: 'student-1',
+    teacher: 'teacher-1',
+    admin: 'admin-1',
+  };
+
+  return {
+    accessToken: `demo-access-${role}`,
+    refreshToken: `demo-refresh-${role}`,
+    user: {
+      id: idMap[role],
+      fullName: displayNameMap[role],
+      email,
+      role,
+    },
+  };
+}
+
+export function buildRegisteredDemoSession(payload: RegisterPayload): AuthSession {
+  return {
+    accessToken: `demo-access-${payload.role}`,
+    refreshToken: `demo-refresh-${payload.role}`,
+    user: {
+      id: `${payload.role}-new`,
+      fullName: payload.fullName,
+      email: payload.email,
+      role: payload.role,
+    },
+  };
+}
+

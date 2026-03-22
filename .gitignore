@@ -1,0 +1,21 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vercel/
+
+# Env
+**/.env
+**/.env.local
+
+# Go
+backend/bin/
+backend/coverage.out

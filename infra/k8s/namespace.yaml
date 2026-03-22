@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mse-mooc
+  labels:
+    app.kubernetes.io/name: mse-mooc
+    app.kubernetes.io/part-of: mse-mooc-platform
+    pod-security.kubernetes.io/enforce: baseline

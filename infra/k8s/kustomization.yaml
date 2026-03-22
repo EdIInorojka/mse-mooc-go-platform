@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mse-mooc
+resources:
+  - namespace.yaml
+  - platform/configmap.yaml
+  - platform/secrets.example.yaml
+  - data/postgres.yaml
+  - data/redis.yaml
+  - data/zookeeper.yaml
+  - data/kafka.yaml
+  - apps/api-gateway.yaml
+  - apps/auth-service.yaml
+  - apps/course-service.yaml
+  - apps/enrollment-service.yaml
+  - apps/frontend.yaml
+  - platform/hpa.yaml
+  - platform/ingress.yaml
+  - policies/network-policies.yaml
