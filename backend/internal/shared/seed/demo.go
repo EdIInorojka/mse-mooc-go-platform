@@ -53,11 +53,36 @@ func SeedDemoData(ctx context.Context, db *sql.DB, cfg DemoConfig) error {
 		return err
 	}
 
-	courseID, err := ensureCourse(ctx, tx, teacherID, "Go Service Architecture", "Practical course about Go services, APIs, and high-load readiness.")
+	courseID, err := ensureCourse(ctx, tx, teacherID, demoCourseSpec{
+		Title:         "Go Service Architecture",
+		Description:   "Practical course about Go services, APIs, and high-load readiness.",
+		Provider:      "HSE Faculty of Computer Science",
+		Category:      "Software Engineering",
+		Delivery:      "blended",
+		Audience:      "mixed",
+		SourceType:    "internal",
+		SubjectTags:   "backend,distributed systems,software engineering",
+		MaterialLinks: "Lecture 1: Service boundaries|https://www.youtube.com/watch?v=dQw4w9WgXcQ\nWorkshop: API Gateway patterns|https://go.dev/doc/tutorial/web-service-gin",
+		DurationWeeks: 8,
+		SeatsLeft:     120,
+	})
 	if err != nil {
 		return err
 	}
-	_, err = ensureCourse(ctx, tx, teacherID, "MOOC Product Analytics", "MOOC analytics, progress metrics, and platform growth insights.")
+	_, err = ensureCourse(ctx, tx, teacherID, demoCourseSpec{
+		Title:         "MOOC Product Analytics",
+		Description:   "MOOC analytics, progress metrics, and platform growth insights.",
+		Provider:      "Coursera",
+		Category:      "Analytics",
+		Delivery:      "online",
+		Audience:      "student",
+		SourceType:    "external",
+		ExternalURL:   "https://www.coursera.org/",
+		SubjectTags:   "analytics,product management,education data",
+		MaterialLinks: "",
+		DurationWeeks: 6,
+		SeatsLeft:     200,
+	})
 	if err != nil {
 		return err
 	}
@@ -114,24 +139,41 @@ func ensureUser(ctx context.Context, tx *sql.Tx, login, email, password, role st
 		return 0, err
 	}
 
+	fullName := strings.ReplaceAll(strings.TrimSpace(login), ".", " ")
 	var id int64
 	err = tx.QueryRowContext(ctx, `
-		INSERT INTO users(login, email, password_hash, role)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users(login, full_name, email, password_hash, role)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (login)
 		DO UPDATE SET
+			full_name = EXCLUDED.full_name,
 			email = EXCLUDED.email,
 			password_hash = EXCLUDED.password_hash,
 			role = EXCLUDED.role
 		RETURNING id
-	`, strings.ToLower(strings.TrimSpace(login)), strings.ToLower(strings.TrimSpace(email)), string(hash), role).Scan(&id)
+	`, strings.ToLower(strings.TrimSpace(login)), fullName, strings.ToLower(strings.TrimSpace(email)), string(hash), role).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
 	return id, nil
 }
 
-func ensureCourse(ctx context.Context, tx *sql.Tx, createdBy int64, title, description string) (int64, error) {
+type demoCourseSpec struct {
+	Title         string
+	Description   string
+	Provider      string
+	Category      string
+	Delivery      string
+	Audience      string
+	SourceType    string
+	ExternalURL   string
+	SubjectTags   string
+	MaterialLinks string
+	DurationWeeks int
+	SeatsLeft     int
+}
+
+func ensureCourse(ctx context.Context, tx *sql.Tx, createdBy int64, spec demoCourseSpec) (int64, error) {
 	var id int64
 	now := time.Now().UTC()
 	err := tx.QueryRowContext(ctx, `
@@ -139,10 +181,15 @@ func ensureCourse(ctx context.Context, tx *sql.Tx, createdBy int64, title, descr
 			SELECT id FROM courses WHERE title = $1 AND created_by_user_id = $2 LIMIT 1
 		), inserted AS (
 			INSERT INTO courses(
-				title, description, language, price, credits, reviews,
+				title, description, provider, category, delivery_format, audience,
+				source_type, external_url, subject_tags, material_links,
+				language, price, credits, reviews, seats_left, duration_weeks,
 				certificated, is_certificate_paid, start_date, end_date, created_by_user_id
 			)
-			SELECT $1, $3, 'ru', 0, 6, 4.8, TRUE, FALSE, $4, $5, $2
+			SELECT $1, $3, $4, $5, $6, $7,
+			       $8, $9, $10, $11,
+			       'ru', 0, 6, 4.8, $12, $13,
+			       TRUE, FALSE, $14, $15, $2
 			WHERE NOT EXISTS (SELECT 1 FROM existing)
 			RETURNING id
 		)
@@ -150,7 +197,9 @@ func ensureCourse(ctx context.Context, tx *sql.Tx, createdBy int64, title, descr
 		UNION ALL
 		SELECT id FROM existing
 		LIMIT 1
-	`, title, createdBy, description, now.AddDate(0, 0, 7), now.AddDate(0, 2, 0)).Scan(&id)
+	`, spec.Title, createdBy, spec.Description, spec.Provider, spec.Category, spec.Delivery, spec.Audience,
+		spec.SourceType, spec.ExternalURL, spec.SubjectTags, spec.MaterialLinks,
+		spec.SeatsLeft, spec.DurationWeeks, now.AddDate(0, 0, 7), now.AddDate(0, 2, 0)).Scan(&id)
 	if err != nil {
 		return 0, err
 	}

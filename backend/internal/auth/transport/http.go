@@ -36,6 +36,7 @@ func (h *Handler) Router() http.Handler {
 		r.Group(func(pr chi.Router) {
 			pr.Use(sharedauth.RequireAuth(h.tokens))
 			pr.Get("/me", h.me)
+			pr.Patch("/me", h.updateMe)
 		})
 	})
 
@@ -60,6 +61,12 @@ type refreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type updateMeRequest struct {
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := httpx.DecodeJSON(r, &req); err != nil {
@@ -68,6 +75,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	}
 	user, tokens, err := h.svc.Register(r.Context(), app.RegisterInput{
 		Login:    req.Login,
+		FullName: req.FullName,
 		Password: req.Password,
 		Email:    req.Email,
 		Role:     req.Role,
@@ -144,4 +152,39 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusOK, user)
+}
+
+func (h *Handler) updateMe(w http.ResponseWriter, r *http.Request) {
+	claims := sharedauth.ClaimsFromContext(r.Context())
+	if claims == nil {
+		httpx.Error(w, http.StatusUnauthorized, "missing claims")
+		return
+	}
+	userID, err := sharedauth.SubjectToUserID(claims.Subject)
+	if err != nil {
+		httpx.Error(w, http.StatusUnauthorized, "invalid subject")
+		return
+	}
+	var req updateMeRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "invalid json")
+		return
+	}
+	user, err := h.svc.UpdateProfile(r.Context(), userID, app.UpdateProfileInput{
+		FullName: req.FullName,
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	switch {
+	case errors.Is(err, app.ErrInvalidInput):
+		httpx.Error(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, app.ErrUserExists):
+		httpx.Error(w, http.StatusConflict, err.Error())
+	case errors.Is(err, app.ErrUserNotFound):
+		httpx.Error(w, http.StatusNotFound, err.Error())
+	case err != nil:
+		httpx.Error(w, http.StatusInternalServerError, err.Error())
+	default:
+		httpx.JSON(w, http.StatusOK, user)
+	}
 }

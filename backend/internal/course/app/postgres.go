@@ -20,11 +20,18 @@ func NewPostgresRepository(db *sql.DB) *PostgresRepository {
 func (r *PostgresRepository) ListCourses(ctx context.Context, filter domain.CourseFilter) ([]domain.Course, error) {
 	args := []any{"%" + strings.ToLower(filter.Search) + "%"}
 	query := `
-		SELECT id, title, description, language, price, credits, reviews,
+		SELECT id, title, description, provider, category, delivery_format,
+		       audience, source_type, external_url, subject_tags, material_links,
+		       language, price, credits, reviews, seats_left, duration_weeks,
 		       certificated, is_certificate_paid, start_date, end_date,
 		       created_by_user_id, created_at, updated_at
 		FROM courses
-		WHERE ($1 = '%%' OR LOWER(title) LIKE $1 OR LOWER(description) LIKE $1)
+		WHERE ($1 = '%%'
+		    OR LOWER(title) LIKE $1
+		    OR LOWER(description) LIKE $1
+		    OR LOWER(provider) LIKE $1
+		    OR LOWER(category) LIKE $1
+		    OR LOWER(subject_tags) LIKE $1)
 	`
 	if filter.CreatedByID != nil {
 		args = append(args, *filter.CreatedByID)
@@ -49,7 +56,9 @@ func (r *PostgresRepository) ListCourses(ctx context.Context, filter domain.Cour
 
 func (r *PostgresRepository) GetCourse(ctx context.Context, id int64) (domain.Course, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT id, title, description, language, price, credits, reviews,
+		SELECT id, title, description, provider, category, delivery_format,
+		       audience, source_type, external_url, subject_tags, material_links,
+		       language, price, credits, reviews, seats_left, duration_weeks,
 		       certificated, is_certificate_paid, start_date, end_date,
 		       created_by_user_id, created_at, updated_at
 		FROM courses
@@ -61,14 +70,20 @@ func (r *PostgresRepository) GetCourse(ctx context.Context, id int64) (domain.Co
 func (r *PostgresRepository) CreateCourse(ctx context.Context, course domain.Course) (domain.Course, error) {
 	row := r.db.QueryRowContext(ctx, `
 		INSERT INTO courses(
-			title, description, language, price, credits, reviews,
+			title, description, provider, category, delivery_format,
+			audience, source_type, external_url, subject_tags, material_links,
+			language, price, credits, reviews, seats_left, duration_weeks,
 			certificated, is_certificate_paid, start_date, end_date, created_by_user_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		RETURNING id, title, description, language, price, credits, reviews,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+		RETURNING id, title, description, provider, category, delivery_format,
+		          audience, source_type, external_url, subject_tags, material_links,
+		          language, price, credits, reviews, seats_left, duration_weeks,
 		          certificated, is_certificate_paid, start_date, end_date,
 		          created_by_user_id, created_at, updated_at
-	`, course.Title, course.Description, course.Language, course.Price, course.Credits, course.Reviews,
+	`, course.Title, course.Description, course.Provider, course.Category, course.DeliveryFormat,
+		course.Audience, course.SourceType, course.ExternalURL, course.SubjectTags, course.MaterialLinks,
+		course.Language, course.Price, course.Credits, course.Reviews, course.SeatsLeft, course.DurationWeeks,
 		course.Certificated, course.IsCertificatePaid, course.StartDate.UTC(), course.EndDate.UTC(), course.CreatedByUserID)
 	return scanCourse(row)
 }
@@ -78,20 +93,34 @@ func (r *PostgresRepository) UpdateCourse(ctx context.Context, course domain.Cou
 		UPDATE courses
 		SET title = $2,
 		    description = $3,
-		    language = $4,
-		    price = $5,
-		    credits = $6,
-		    reviews = $7,
-		    certificated = $8,
-		    is_certificate_paid = $9,
-		    start_date = $10,
-		    end_date = $11,
+		    provider = $4,
+		    category = $5,
+		    delivery_format = $6,
+		    audience = $7,
+		    source_type = $8,
+		    external_url = $9,
+		    subject_tags = $10,
+		    material_links = $11,
+		    language = $12,
+		    price = $13,
+		    credits = $14,
+		    reviews = $15,
+		    seats_left = $16,
+		    duration_weeks = $17,
+		    certificated = $18,
+		    is_certificate_paid = $19,
+		    start_date = $20,
+		    end_date = $21,
 		    updated_at = NOW()
 		WHERE id = $1
-		RETURNING id, title, description, language, price, credits, reviews,
+		RETURNING id, title, description, provider, category, delivery_format,
+		          audience, source_type, external_url, subject_tags, material_links,
+		          language, price, credits, reviews, seats_left, duration_weeks,
 		          certificated, is_certificate_paid, start_date, end_date,
 		          created_by_user_id, created_at, updated_at
-	`, course.ID, course.Title, course.Description, course.Language, course.Price, course.Credits, course.Reviews,
+	`, course.ID, course.Title, course.Description, course.Provider, course.Category, course.DeliveryFormat,
+		course.Audience, course.SourceType, course.ExternalURL, course.SubjectTags, course.MaterialLinks,
+		course.Language, course.Price, course.Credits, course.Reviews, course.SeatsLeft, course.DurationWeeks,
 		course.Certificated, course.IsCertificatePaid, course.StartDate.UTC(), course.EndDate.UTC())
 	return scanCourse(row)
 }
@@ -115,7 +144,32 @@ type courseScanner interface{ Scan(dest ...any) error }
 
 func scanCourse(row courseScanner) (domain.Course, error) {
 	var course domain.Course
-	err := row.Scan(&course.ID, &course.Title, &course.Description, &course.Language, &course.Price, &course.Credits, &course.Reviews, &course.Certificated, &course.IsCertificatePaid, &course.StartDate, &course.EndDate, &course.CreatedByUserID, &course.CreatedAt, &course.UpdatedAt)
+	err := row.Scan(
+		&course.ID,
+		&course.Title,
+		&course.Description,
+		&course.Provider,
+		&course.Category,
+		&course.DeliveryFormat,
+		&course.Audience,
+		&course.SourceType,
+		&course.ExternalURL,
+		&course.SubjectTags,
+		&course.MaterialLinks,
+		&course.Language,
+		&course.Price,
+		&course.Credits,
+		&course.Reviews,
+		&course.SeatsLeft,
+		&course.DurationWeeks,
+		&course.Certificated,
+		&course.IsCertificatePaid,
+		&course.StartDate,
+		&course.EndDate,
+		&course.CreatedByUserID,
+		&course.CreatedAt,
+		&course.UpdatedAt,
+	)
 	if err != nil {
 		return domain.Course{}, err
 	}

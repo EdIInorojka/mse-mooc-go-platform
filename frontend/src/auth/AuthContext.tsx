@@ -1,8 +1,8 @@
 ﻿/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { fetchMe, loginRequest, refreshRequest, registerRequest } from '../api/services/auth';
+import { fetchMe, loginRequest, refreshRequest, registerRequest, updateProfileRequest } from '../api/services/auth';
 import { setAccessToken } from '../api/client';
-import type { AuthSession, LoginCredentials, RegisterPayload, Role, SessionUser } from '../types/models';
+import type { AuthSession, LoginCredentials, RegisterPayload, Role, SessionUser, UpdateProfilePayload } from '../types/models';
 
 interface AuthContextValue {
   token: string | null;
@@ -12,6 +12,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>;
   logout: () => void;
 }
 
@@ -89,6 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       register: async (payload: RegisterPayload) => {
         const nextSession = await registerRequest(payload);
+        setSession(nextSession);
+        persistSession(nextSession);
+      },
+      updateProfile: async (payload: UpdateProfilePayload) => {
+        if (!session) {
+          return;
+        }
+        const updatedUser = await updateProfileRequest(payload);
+        const nextSession = { ...session, user: updatedUser };
         setSession(nextSession);
         persistSession(nextSession);
       },

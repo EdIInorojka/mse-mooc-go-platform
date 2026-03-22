@@ -1,4 +1,4 @@
-﻿export type Role = 'student' | 'teacher' | 'admin';
+export type Role = 'student' | 'teacher' | 'teacher_assistant' | 'admin';
 
 export interface SessionUser {
   id: string;
@@ -31,15 +31,32 @@ export interface Course {
   title: string;
   provider: string;
   category: string;
+  deliveryFormat: string;
   language: string;
   durationWeeks: number;
   price: number;
+  credits: number;
   rating: number;
   seatsLeft: number;
   startDate: string;
+  endDate: string;
   description: string;
+  subjects: string[];
+  sourceType: 'internal' | 'external';
+  externalUrl: string;
+  materialLinks: Array<{
+    title: string;
+    url: string;
+    kind: 'video' | 'lecture' | 'material';
+  }>;
   enrollmentStatus: 'open' | 'enrolled' | 'waitlist';
   audience: 'student' | 'teacher' | 'mixed';
+}
+
+export interface UpdateProfilePayload {
+  fullName?: string;
+  email?: string;
+  password?: string;
 }
 
 export interface GradeRecord {
@@ -103,4 +120,5 @@ export interface DashboardMetrics {
   completionRate: number;
   weeklyEnrollments: number;
 }
+
 

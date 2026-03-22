@@ -124,8 +124,21 @@ func validateCourse(course domain.Course) error {
 	if strings.TrimSpace(course.Title) == "" || strings.TrimSpace(course.Description) == "" || strings.TrimSpace(course.Language) == "" {
 		return ErrInvalidInput
 	}
-	if course.Price < 0 || course.Credits < 0 || course.Reviews < 0 || course.Reviews > 5 {
+	if course.Price < 0 || course.Credits < 0 || course.Reviews < 0 || course.Reviews > 5 || course.SeatsLeft < 0 || course.DurationWeeks <= 0 {
 		return ErrInvalidInput
+	}
+	sourceType := strings.ToLower(strings.TrimSpace(course.SourceType))
+	if sourceType == "" {
+		sourceType = "internal"
+	}
+	if sourceType != "internal" && sourceType != "external" {
+		return ErrInvalidInput
+	}
+	if sourceType == "external" {
+		externalURL := strings.TrimSpace(course.ExternalURL)
+		if externalURL == "" || (!strings.HasPrefix(externalURL, "http://") && !strings.HasPrefix(externalURL, "https://")) {
+			return ErrInvalidInput
+		}
 	}
 	if course.StartDate.IsZero() || course.EndDate.IsZero() || !course.EndDate.After(course.StartDate) {
 		return ErrInvalidInput

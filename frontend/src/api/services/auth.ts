@@ -1,7 +1,7 @@
 ﻿import { AxiosError } from 'axios';
 import { apiClient } from '../client';
 import { buildDemoSession, buildRegisteredDemoSession } from '../mock';
-import type { AuthSession, LoginCredentials, RegisterPayload, Role, SessionUser } from '../../types/models';
+import type { AuthSession, LoginCredentials, RegisterPayload, Role, SessionUser, UpdateProfilePayload } from '../../types/models';
 
 interface BackendAuthResponse {
   user: {
@@ -25,7 +25,7 @@ interface BackendRefreshResponse {
 function mapBackendUser(user: BackendAuthResponse['user']): SessionUser {
   return {
     id: String(user.id),
-    fullName: user.full_name ?? user.login ?? user.email,
+    fullName: user.full_name?.trim() || user.login || user.email,
     email: user.email,
     role: user.role,
   };
@@ -58,6 +58,7 @@ export async function registerRequest(payload: RegisterPayload): Promise<AuthSes
   try {
     const response = await apiClient.post<BackendAuthResponse>('/auth/register', {
       login: payload.email,
+      full_name: payload.fullName,
       email: payload.email,
       password: payload.password,
       role: payload.role,
@@ -94,5 +95,14 @@ export async function fetchMe(): Promise<SessionUser | null> {
   } catch {
     return null;
   }
+}
+
+export async function updateProfileRequest(payload: UpdateProfilePayload): Promise<SessionUser> {
+  const response = await apiClient.patch<BackendAuthResponse['user']>('/auth/me', {
+    full_name: payload.fullName,
+    email: payload.email,
+    password: payload.password,
+  });
+  return mapBackendUser(response.data);
 }
 

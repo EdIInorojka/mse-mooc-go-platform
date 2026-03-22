@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
@@ -16,20 +16,20 @@ const labels = {
   ru: {
     navMap: {
       student: [
-        { to: '/app/courses', label: 'Каталог', hint: 'Поиск курсов и записей' },
-        { to: '/app/my-courses', label: 'Мои курсы', hint: 'Прогресс и учебная нагрузка' },
-        { to: '/app/grades', label: 'Оценки', hint: 'Результаты и фидбек' },
-        { to: '/app/profile', label: 'Профиль', hint: 'Аккаунт и настройки' },
+        { to: '/app/courses', label: 'Каталог', hint: 'Поиск и запись на курсы' },
+        { to: '/app/my-courses', label: 'Мои курсы', hint: 'Текущие записи и прогресс' },
+        { to: '/app/grades', label: 'Оценки', hint: 'Результаты и обратная связь' },
+        { to: '/app/profile', label: 'Профиль', hint: 'Личные данные и настройки' },
       ],
       teacher: [
-        { to: '/teacher/courses', label: 'Курсы', hint: 'Авторские курсы и запуск' },
-        { to: '/teacher/groups', label: 'Группы', hint: 'Когорты и invite-ссылки' },
-        { to: '/teacher/grades', label: 'Оценки', hint: 'Выставление и публикация' },
+        { to: '/teacher/courses', label: 'Курсы', hint: 'Авторские и внешние курсы' },
+        { to: '/teacher/groups', label: 'Группы', hint: 'Учебные группы и инвайты' },
+        { to: '/teacher/grades', label: 'Оценки', hint: 'Проверка и публикация' },
       ],
       teacher_assistant: [
-        { to: '/teacher/courses', label: 'Курсы', hint: 'Назначенные учебные курсы' },
-        { to: '/teacher/groups', label: 'Группы', hint: 'Когорты и invite-ссылки' },
-        { to: '/teacher/grades', label: 'Оценки', hint: 'Выставление и публикация' },
+        { to: '/teacher/courses', label: 'Курсы', hint: 'Назначенные курсы' },
+        { to: '/teacher/groups', label: 'Группы', hint: 'Сопровождение учебных групп' },
+        { to: '/teacher/grades', label: 'Оценки', hint: 'Ассистирование проверок' },
       ],
       admin: [
         { to: '/admin', label: 'Дашборд', hint: 'Операционный обзор' },
@@ -37,81 +37,41 @@ const labels = {
         { to: '/admin/users', label: 'Пользователи', hint: 'Роли и управление доступом' },
       ],
     } as Record<Role, NavItem[]>,
-    roleTitle: {
-      student: 'Пространство студента',
-      teacher: 'Пространство преподавателя',
-      teacher_assistant: 'Пространство ассистента',
-      admin: 'Панель администратора',
-    } as Record<Role, string>,
-    roleDescription: {
-      student: 'Каталог курсов, мои записи, оценки и персональная траектория обучения.',
-      teacher: 'Авторские курсы, учебные группы, инвайты и оценивание студентов.',
-      teacher_assistant: 'Сопровождение учебных групп, инвайты и выставление оценок.',
-      admin: 'Управление курсами, пользователями и операционными метриками платформы.',
-    } as Record<Role, string>,
-    roleEyebrow: {
-      student: 'Обучение',
-      teacher: 'Преподавание',
-      teacher_assistant: 'Ассистирование',
-      admin: 'Операционный контур',
-    } as Record<Role, string>,
-    signedInAs: 'Вход выполнен',
-    logOut: 'Выйти',
     menu: 'Меню',
-    overview: 'обзор',
-    governanceActive: 'Контроль платформы активен',
-    teachingReady: 'Контур преподавания готов',
-    studyReady: 'Контур обучения готов',
+    signedInAs: 'Аккаунт',
+    logOut: 'Выйти',
+    platform: 'Платформа онлайн-курсов',
+    online: 'Платформа в сети',
   },
   en: {
     navMap: {
       student: [
-        { to: '/app/courses', label: 'Catalog', hint: 'Find MOOCs and join tracks' },
-        { to: '/app/my-courses', label: 'My Courses', hint: 'Progress and workload' },
+        { to: '/app/courses', label: 'Catalog', hint: 'Search and enroll in courses' },
+        { to: '/app/my-courses', label: 'My Courses', hint: 'Current enrollments and progress' },
         { to: '/app/grades', label: 'Grades', hint: 'Results and feedback' },
-        { to: '/app/profile', label: 'Profile', hint: 'Account and preferences' },
+        { to: '/app/profile', label: 'Profile', hint: 'Personal data and preferences' },
       ],
       teacher: [
-        { to: '/teacher/courses', label: 'Courses', hint: 'Create and launch authored courses' },
-        { to: '/teacher/groups', label: 'Groups', hint: 'Cohorts and invite links' },
+        { to: '/teacher/courses', label: 'Courses', hint: 'Authored and external courses' },
+        { to: '/teacher/groups', label: 'Groups', hint: 'Study groups and invites' },
         { to: '/teacher/grades', label: 'Grades', hint: 'Assessment and publishing' },
       ],
       teacher_assistant: [
-        { to: '/teacher/courses', label: 'Courses', hint: 'Assigned teaching courses' },
-        { to: '/teacher/groups', label: 'Groups', hint: 'Cohorts and invite links' },
-        { to: '/teacher/grades', label: 'Grades', hint: 'Assessment and publishing' },
+        { to: '/teacher/courses', label: 'Courses', hint: 'Assigned courses' },
+        { to: '/teacher/groups', label: 'Groups', hint: 'Group operations support' },
+        { to: '/teacher/grades', label: 'Grades', hint: 'Assessment assistance' },
       ],
       admin: [
         { to: '/admin', label: 'Dashboard', hint: 'Operational overview' },
-        { to: '/admin/courses', label: 'Courses', hint: 'Moderate learning portfolio' },
+        { to: '/admin/courses', label: 'Courses', hint: 'Catalog moderation' },
         { to: '/admin/users', label: 'Users', hint: 'Roles and access control' },
       ],
     } as Record<Role, NavItem[]>,
-    roleTitle: {
-      student: 'Student workspace',
-      teacher: 'Teacher workspace',
-      teacher_assistant: 'Assistant workspace',
-      admin: 'Admin control room',
-    } as Record<Role, string>,
-    roleDescription: {
-      student: 'Course catalog, enrollments, grades and personalized study path.',
-      teacher: 'Authored courses, student groups, invites, and grading operations.',
-      teacher_assistant: 'Group support, invite links, and grading assistance.',
-      admin: 'Course and user operations with platform-level monitoring.',
-    } as Record<Role, string>,
-    roleEyebrow: {
-      student: 'Learning space',
-      teacher: 'Teaching space',
-      teacher_assistant: 'Assistant space',
-      admin: 'Operations panel',
-    } as Record<Role, string>,
-    signedInAs: 'Signed in as',
-    logOut: 'Log out',
     menu: 'Menu',
-    overview: 'overview',
-    governanceActive: 'Governance active',
-    teachingReady: 'Teaching flow ready',
-    studyReady: 'Study flow ready',
+    signedInAs: 'Account',
+    logOut: 'Log out',
+    platform: 'Online course platform',
+    online: 'Platform online',
   },
 } as const;
 
@@ -119,7 +79,6 @@ export function PortalLayout({ role }: { role: Role }) {
   const { logout, user } = useAuth();
   const { language } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
   const text = labels[language];
 
   const navItems = useMemo(() => text.navMap[role], [role, text.navMap]);
@@ -129,8 +88,8 @@ export function PortalLayout({ role }: { role: Role }) {
       <aside className={`sidebar ${mobileOpen ? 'sidebar--open' : ''}`}>
         <div className="brand-block">
           <span className="brand-badge">MSE-MOOC</span>
-          <h1>{text.roleTitle[role]}</h1>
-          <p>{text.roleDescription[role]}</p>
+          <h1>{text.platform}</h1>
+          <p>{text.online}</p>
         </div>
 
         <nav className="nav-list" aria-label="Primary navigation">
@@ -160,7 +119,7 @@ export function PortalLayout({ role }: { role: Role }) {
       </aside>
 
       <div className="content-area">
-        <header className="topbar">
+        <header className="topbar topbar--compact">
           <button
             type="button"
             className="menu-button"
@@ -168,20 +127,12 @@ export function PortalLayout({ role }: { role: Role }) {
           >
             {text.menu}
           </button>
-          <div>
-            <p className="eyebrow">{text.roleEyebrow[role]}</p>
-            <h2>{location.pathname.replace('/', ' ').trim() || text.overview}</h2>
+          <div className="topbar-account">
+            <strong>{user?.fullName}</strong>
+            <span className="pill pill--role">{user ? roleLabel(user.role, language) : ''}</span>
           </div>
           <div className="topbar-status">
             <LanguageToggle />
-            <span className="status-dot" />
-            <span>
-              {role === 'admin'
-                ? text.governanceActive
-                : role === 'teacher' || role === 'teacher_assistant'
-                  ? text.teachingReady
-                  : text.studyReady}
-            </span>
           </div>
         </header>
 

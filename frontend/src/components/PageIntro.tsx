@@ -1,17 +1,17 @@
 ﻿import type { ReactNode } from 'react';
 
 interface PageIntroProps {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   actions?: ReactNode;
 }
 
 export function PageIntro({ eyebrow, title, description, actions }: PageIntroProps) {
+  void eyebrow;
   return (
     <section className="page-intro">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         <p className="page-intro__description">{description}</p>
       </div>

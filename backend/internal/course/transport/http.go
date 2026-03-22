@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -48,10 +49,20 @@ func (h *Handler) Router() http.Handler {
 type coursePayload struct {
 	Title             string  `json:"title"`
 	Description       string  `json:"description"`
+	Provider          string  `json:"provider"`
+	Category          string  `json:"category"`
+	DeliveryFormat    string  `json:"delivery_format"`
+	Audience          string  `json:"audience"`
+	SourceType        string  `json:"source_type"`
+	ExternalURL       string  `json:"external_url"`
+	SubjectTags       string  `json:"subject_tags"`
+	MaterialLinks     string  `json:"material_links"`
 	Language          string  `json:"language"`
 	Price             int     `json:"price"`
 	Credits           int     `json:"credits"`
 	Reviews           float32 `json:"reviews"`
+	SeatsLeft         int     `json:"seats_left"`
+	DurationWeeks     int     `json:"duration_weeks"`
 	Certificated      bool    `json:"certificated"`
 	IsCertificatePaid bool    `json:"is_certificate_paid"`
 	StartDate         string  `json:"start_date"`
@@ -195,7 +206,56 @@ func (p coursePayload) toDomain() (domain.Course, error) {
 	if err != nil {
 		return domain.Course{}, err
 	}
-	return domain.Course{Title: p.Title, Description: p.Description, Language: p.Language, Price: p.Price, Credits: p.Credits, Reviews: p.Reviews, Certificated: p.Certificated, IsCertificatePaid: p.IsCertificatePaid, StartDate: start, EndDate: end}, nil
+	provider := strings.TrimSpace(p.Provider)
+	if provider == "" {
+		provider = "MSE-MOOC"
+	}
+	category := strings.TrimSpace(p.Category)
+	if category == "" {
+		category = "General"
+	}
+	deliveryFormat := strings.TrimSpace(strings.ToLower(p.DeliveryFormat))
+	if deliveryFormat == "" {
+		deliveryFormat = "online"
+	}
+	audience := strings.TrimSpace(strings.ToLower(p.Audience))
+	if audience == "" {
+		audience = "mixed"
+	}
+	sourceType := strings.TrimSpace(strings.ToLower(p.SourceType))
+	if sourceType == "" {
+		sourceType = "internal"
+	}
+	durationWeeks := p.DurationWeeks
+	if durationWeeks <= 0 {
+		durationWeeks = 8
+	}
+	seatsLeft := p.SeatsLeft
+	if seatsLeft <= 0 {
+		seatsLeft = 100
+	}
+	return domain.Course{
+		Title:             strings.TrimSpace(p.Title),
+		Description:       strings.TrimSpace(p.Description),
+		Provider:          provider,
+		Category:          category,
+		DeliveryFormat:    deliveryFormat,
+		Audience:          audience,
+		SourceType:        sourceType,
+		ExternalURL:       strings.TrimSpace(p.ExternalURL),
+		SubjectTags:       strings.TrimSpace(p.SubjectTags),
+		MaterialLinks:     strings.TrimSpace(p.MaterialLinks),
+		Language:          strings.TrimSpace(p.Language),
+		Price:             p.Price,
+		Credits:           p.Credits,
+		Reviews:           p.Reviews,
+		SeatsLeft:         seatsLeft,
+		DurationWeeks:     durationWeeks,
+		Certificated:      p.Certificated,
+		IsCertificatePaid: p.IsCertificatePaid,
+		StartDate:         start,
+		EndDate:           end,
+	}, nil
 }
 
 func actorIDFromClaims(claims *sharedauth.Claims) (int64, bool) {

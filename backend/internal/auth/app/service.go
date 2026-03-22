@@ -24,6 +24,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
 	FindByLoginOrEmail(ctx context.Context, loginOrEmail string) (domain.User, error)
 	FindByID(ctx context.Context, id int64) (domain.User, error)
+	UpdateProfile(ctx context.Context, id int64, fullName, email, passwordHash string) (domain.User, error)
 	EnsureAdmin(ctx context.Context, login, email, passwordHash string) error
 }
 
@@ -35,9 +36,16 @@ type Service struct {
 
 type RegisterInput struct {
 	Login    string `json:"login"`
+	FullName string `json:"full_name"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
+}
+
+type UpdateProfileInput struct {
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type LoginInput struct {
@@ -132,6 +140,34 @@ func (s *Service) ByID(ctx context.Context, id int64) (domain.User, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
+func (s *Service) UpdateProfile(ctx context.Context, id int64, input UpdateProfileInput) (domain.User, error) {
+	fullName := strings.TrimSpace(input.FullName)
+	email := strings.TrimSpace(strings.ToLower(input.Email))
+	password := strings.TrimSpace(input.Password)
+
+	if fullName == "" && email == "" && password == "" {
+		return domain.User{}, ErrInvalidInput
+	}
+	if password != "" && len(password) < 8 {
+		return domain.User{}, ErrInvalidInput
+	}
+
+	passwordHash := ""
+	if password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return domain.User{}, err
+		}
+		passwordHash = string(hash)
+	}
+
+	user, err := s.repo.UpdateProfile(ctx, id, fullName, email, passwordHash)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user, nil
+}
+
 func (s *Service) EnsureAdminUser(ctx context.Context, login, email, password string) error {
 	login = strings.TrimSpace(strings.ToLower(login))
 	email = strings.TrimSpace(strings.ToLower(email))
@@ -165,6 +201,7 @@ func (s *Service) issueTokenPair(userID int64, role string) (TokenPair, error) {
 
 func normalizeRegistration(input RegisterInput) (domain.User, error) {
 	login := strings.TrimSpace(strings.ToLower(input.Login))
+	fullName := strings.TrimSpace(input.FullName)
 	email := strings.TrimSpace(strings.ToLower(input.Email))
 	password := strings.TrimSpace(input.Password)
 	role := strings.TrimSpace(strings.ToLower(input.Role))
@@ -180,9 +217,13 @@ func normalizeRegistration(input RegisterInput) (domain.User, error) {
 	if !sharedauth.CanSelfRegister(role) {
 		return domain.User{}, ErrPublicAdminRegistration
 	}
+	if fullName == "" {
+		fullName = login
+	}
 	return domain.User{
-		Login: login,
-		Email: email,
-		Role:  role,
+		Login:    login,
+		FullName: fullName,
+		Email:    email,
+		Role:     role,
 	}, nil
 }

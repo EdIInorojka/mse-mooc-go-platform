@@ -49,6 +49,24 @@ func (r *fakeUserRepo) FindByID(_ context.Context, id int64) (domain.User, error
 	return user, nil
 }
 
+func (r *fakeUserRepo) UpdateProfile(_ context.Context, id int64, fullName, email, passwordHash string) (domain.User, error) {
+	user, ok := r.users[id]
+	if !ok {
+		return domain.User{}, ErrUserNotFound
+	}
+	if fullName != "" {
+		user.FullName = fullName
+	}
+	if email != "" {
+		user.Email = email
+	}
+	if passwordHash != "" {
+		user.PasswordHash = passwordHash
+	}
+	r.users[id] = user
+	return user, nil
+}
+
 func (r *fakeUserRepo) EnsureAdmin(_ context.Context, login, email, passwordHash string) error {
 	_, err := r.Create(context.Background(), domain.User{Login: login, Email: email, PasswordHash: passwordHash, Role: sharedauth.RoleAdmin})
 	if err == ErrUserExists {

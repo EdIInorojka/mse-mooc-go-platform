@@ -5,6 +5,7 @@ import { PortalLayout } from './components/PortalLayout';
 import { LoginPage } from './pages/LoginPage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
 import { CourseCatalogPage } from './pages/user/CourseCatalogPage';
+import { CourseDetailsPage } from './pages/user/CourseDetailsPage';
 import { MyCoursesPage } from './pages/user/MyCoursesPage';
 import { ProfilePage } from './pages/user/ProfilePage';
 import { MyGradesPage } from './pages/user/MyGradesPage';
@@ -48,6 +49,7 @@ function App() {
         <Route path="/app" element={<PortalLayout role="student" />}>
           <Route index element={<Navigate to="courses" replace />} />
           <Route path="courses" element={<CourseCatalogPage />} />
+          <Route path="courses/:courseId" element={<CourseDetailsPage />} />
           <Route path="my-courses" element={<MyCoursesPage />} />
           <Route path="grades" element={<MyGradesPage />} />
           <Route path="profile" element={<ProfilePage />} />
