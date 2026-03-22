@@ -3,6 +3,7 @@ import axios from 'axios';
 let accessToken: string | null = null;
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api';
 const normalizedBaseUrl = rawBaseUrl.replace(/\\r\\n/g, '').trim();
+const isLocalTunnelBaseUrl = /\.loca\.lt(\/|$)/i.test(normalizedBaseUrl);
 
 export const apiClient = axios.create({
   baseURL: normalizedBaseUrl,
@@ -17,6 +18,10 @@ export function setAccessToken(token: string | null) {
 }
 
 apiClient.interceptors.request.use((config) => {
+  if (isLocalTunnelBaseUrl) {
+    config.headers['bypass-tunnel-reminder'] = 'true';
+  }
+
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }

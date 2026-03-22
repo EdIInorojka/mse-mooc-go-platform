@@ -21,6 +21,7 @@ func main() {
 	authURL := config.Env("AUTH_SERVICE_URL", "http://localhost:8081")
 	courseURL := config.Env("COURSE_SERVICE_URL", "http://localhost:8082")
 	enrollmentURL := config.Env("ENROLLMENT_SERVICE_URL", "http://localhost:8083")
+	allowedOrigins := config.EnvList("CORS_ALLOWED_ORIGINS", []string{"*"})
 	authProxy := newProxy(authURL)
 	courseProxy := newProxy(courseURL)
 	enrollmentProxy := newProxy(enrollmentURL)
@@ -46,7 +47,7 @@ func main() {
 	})
 	mux.Handle("/", apiMux)
 	mux.Handle("/api/", http.StripPrefix("/api", apiMux))
-	handler := httpx.CorrelationID(httpx.Logging(httpx.NewRateLimit(240, time.Minute)(cors(mux))))
+	handler := httpx.CorrelationID(httpx.Logging(httpx.NewRateLimit(240, time.Minute)(cors(mux, allowedOrigins))))
 	srv := &http.Server{Addr: ":" + port, Handler: handler}
 	go func() {
 		log.Printf("api-gateway listening on :%s", port)
@@ -80,21 +81,47 @@ func newProxy(raw string) http.Handler {
 	return proxy
 }
 
-func cors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
+func cors(next http.Handler, allowedOrigins []string) http.Handler {
+	allowAll := false
+	allowed := make(map[string]struct{}, len(allowedOrigins))
+	for _, origin := range allowedOrigins {
+		origin = strings.TrimSpace(origin)
 		if origin == "" {
-			origin = "*"
+			continue
 		}
-		if strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://") || origin == "*" {
+		if origin == "*" {
+			allowAll = true
+			continue
+		}
+		allowed[origin] = struct{}{}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin != "" {
+			w.Header().Add("Vary", "Origin")
+		}
+
+		if origin != "" && (allowAll || originAllowed(origin, allowed)) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else if origin == "" && allowAll {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Correlation-ID")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Correlation-ID, Bypass-Tunnel-Reminder")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		if r.Method == http.MethodOptions {
+			if origin != "" && !allowAll && !originAllowed(origin, allowed) {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func originAllowed(origin string, allowed map[string]struct{}) bool {
+	_, ok := allowed[origin]
+	return ok
 }
