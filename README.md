@@ -1,6 +1,7 @@
 ﻿# MSE-MOOC v2
 
 Новый контур курсового проекта: переписывание legacy MOOC системы на Go + React с инфраструктурой Kubernetes.
+Status: architectural and educational prototype. Not deployed to production.
 
 ## Что уже подготовлено
 - Go backend из 4 сервисов:
